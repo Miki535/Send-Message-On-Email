@@ -23,19 +23,17 @@ func main() {
 
 func HomeFunc(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
+		// secret code and own email
 		secretKey := r.FormValue("secretkey")
 		ownemail := r.FormValue("ownemail")
 		email := r.FormValue("email")
 		message := r.FormValue("message")
-		// dont forget change ENTERGMAIL@gmail.com on real gmail!
-		// authentication in SMTP // Don`t forget change secret code!!!
+
 		auth := smtp.PlainAuth("", ownemail, secretKey, "smtp.gmail.com")
 
 		to := []string{email}
 		msg := message
 		// send message on gmail
-
-		// don`t forget change ENTERGMAIL@gmail.com on real gmail!
 		err := smtp.SendMail("smtp.gmail.com:587", auth, ownemail, to, []byte(fmt.Sprint(msg)))
 
 		if err != nil {
