@@ -2,55 +2,40 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/smtp"
+
+	"github.com/gin-gonic/gin"
 )
 
-// templates:
-var tpl = template.Must(template.ParseFiles("templates/index.html"))
-var tplp = template.Must(template.ParseFiles("templates/about.html"))
-
 func main() {
-	http.HandleFunc("/about", about)
+	r := gin.Default()
 
-	http.HandleFunc("/", HomeFunc)
+	r.LoadHTMLGlob("templates/*")
 
-	//start server on localhost :8080
-
-	http.ListenAndServe(":8080", nil)
-}
-
-func HomeFunc(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		// secret code and own email
-		secretKey := r.FormValue("secretkey")
-		ownemail := r.FormValue("ownemail")
-		email := r.FormValue("email")
-		message := r.FormValue("message")
-
+	r.GET("/", func(c *gin.Context) {
+		c.HTML(200, "index.html", nil)
+	})
+	r.POST("/", func(c *gin.Context) {
+		secretKey := c.PostForm("secretkey")
+		ownemail := c.PostForm("ownemail")
+		email := c.PostForm("email")
+		message := c.PostForm("message")
 		auth := smtp.PlainAuth("", ownemail, secretKey, "smtp.gmail.com")
 
 		to := []string{email}
 		msg := message
-		// send message on gmail
+		// send message on email
 		err := smtp.SendMail("smtp.gmail.com:587", auth, ownemail, to, []byte(fmt.Sprint(msg)))
 
 		if err != nil {
-			http.Error(w, "ERROR! \n StatusBadRequest", http.StatusBadRequest)
-			return
+			c.String(http.StatusBadRequest, "Something went wrong")
 		}
+	})
 
-	}
-	tpl.Execute(w, nil)
-}
-
-//func about for our frontend
-
-func about(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-
-	}
-	tplp.Execute(w, nil)
-
+	r.GET("/about", func(c *gin.Context) {
+		c.HTML(200, "about.html", nil)
+	})
+	//run our server on localhost 8080
+	r.Run(":8080")
 }
